@@ -25,7 +25,7 @@ class EasyAutoConfiguration internal constructor(
                 + if (reason != null) "\nbecause $reason" else "" //
     )
 
-    private val dependencies = mutableSetOf<EasyAutoDependency>()//: WeightBalancedTreeMap<EasyAutoDependency, Nothing?>? = null
+    private val dependencies = mutableSetOf<EasyAutoDependency>()
 
     /**
      * adds [dependency] to this configuration
@@ -45,7 +45,7 @@ class EasyAutoConfiguration internal constructor(
             )
         }
         dependencies.forEach { incompatibleDependency ->
-            if (dependency.mutuallyExclusiveDependencies.contains(incompatibleDependency)) throw MutuallyExclusiveDependenciesException(
+            if (incompatibleDependency.mutuallyExclusiveDependencies.contains(dependency)) throw MutuallyExclusiveDependenciesException(
                 dependency,
                 incompatibleDependency,
                 dependency.mutuallyExclusiveDependencies[incompatibleDependency],
