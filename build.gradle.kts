@@ -30,7 +30,6 @@ dependencies {
     //noinspection GradleDependency
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.24")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21")
-    implementation("dev.frozenmilk.dairy:Util:1.2.2")
     compileOnly(gradleApi())
     compileOnly(gradleKotlinDsl())
 }

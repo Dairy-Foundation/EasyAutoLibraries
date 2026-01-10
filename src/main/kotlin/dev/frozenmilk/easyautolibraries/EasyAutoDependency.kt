@@ -1,9 +1,5 @@
 package dev.frozenmilk.easyautolibraries
 
-import dev.frozenmilk.util.collections.Cons
-import dev.frozenmilk.util.collections.Ord
-import dev.frozenmilk.util.collections.WeightBalancedTreeMap
-
 /**
  * represents a gradle dependency
  *
@@ -49,8 +45,8 @@ class EasyAutoDependency(
          *
          * @see org.gradle.api.artifacts.ModuleDependency.exclude
          */
-        fun excludeGroup(group: String) {
-            excludedGroups = Cons.cons(group, excludedGroups)
+        fun exclude(group: String? = null, module: String? = null) {
+            exclusions.add(group to module)
         }
 
         /**
@@ -74,12 +70,7 @@ class EasyAutoDependency(
          * specifies that this is incompatible with another [dependency], and why
          */
         fun incompatibleWith(dependency: EasyAutoDependency, reason: String? = null) {
-            mutuallyExclusiveDependencies = WeightBalancedTreeMap.add(
-                Ord.HashCode,
-                mutuallyExclusiveDependencies,
-                dependency,
-                reason,
-            )
+            mutuallyExclusiveDependencies[dependency] = reason
         }
     }
 
@@ -109,11 +100,10 @@ class EasyAutoDependency(
      */
     operator fun invoke(f: Scope.() -> Unit) = apply { f(scope) }
 
-    internal var excludedGroups: Cons<String>? = null
+    internal var exclusions = mutableSetOf<Pair<String?, String?>>()
     internal var isTransitive: Boolean = true
     internal var force: Boolean = true
-    internal var mutuallyExclusiveDependencies: WeightBalancedTreeMap<EasyAutoDependency, String?>? =
-        null
+    internal val mutuallyExclusiveDependencies = mutableMapOf<EasyAutoDependency, String?>()
 
     init {
         f(scope)

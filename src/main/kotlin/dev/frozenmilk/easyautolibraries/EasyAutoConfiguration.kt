@@ -1,8 +1,5 @@
 package dev.frozenmilk.easyautolibraries
 
-import dev.frozenmilk.util.collections.Cons
-import dev.frozenmilk.util.collections.Ord
-import dev.frozenmilk.util.collections.WeightBalancedTreeMap
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ModuleDependency
 import org.gradle.api.logging.LogLevel
@@ -28,7 +25,7 @@ class EasyAutoConfiguration internal constructor(
                 + if (reason != null) "\nbecause $reason" else "" //
     )
 
-    private var dependencies: WeightBalancedTreeMap<EasyAutoDependency, Nothing?>? = null
+    private val dependencies = mutableSetOf<EasyAutoDependency>()//: WeightBalancedTreeMap<EasyAutoDependency, Nothing?>? = null
 
     /**
      * adds [dependency] to this configuration
@@ -37,47 +34,25 @@ class EasyAutoConfiguration internal constructor(
      * then invokes [f] on the actual gradle dependency object
      */
     operator fun invoke(dependency: EasyAutoDependency, f: ModuleDependency.() -> Unit = {}) {
-        if (WeightBalancedTreeMap.get(Ord.HashCode, dependencies, dependency) != null) return
+        if (dependencies.contains(dependency)) return
 
         // check for mutually exclusive dependencies
-        WeightBalancedTreeMap.inorderFold(
-            dependency.mutuallyExclusiveDependencies,
-            Unit,
-        ) { _, incompatibleDependency, reason ->
-            val lookup = WeightBalancedTreeMap.get(
-                Ord.HashCode,
-                dependencies,
-                incompatibleDependency,
-            )
-            if (lookup != null) throw MutuallyExclusiveDependenciesException(
+        dependency.mutuallyExclusiveDependencies.forEach { (incompatibleDependency, reason) ->
+            if (dependencies.contains(incompatibleDependency)) throw MutuallyExclusiveDependenciesException(
                 dependency,
                 incompatibleDependency,
                 reason,
             )
         }
-
-        WeightBalancedTreeMap.inorderFold(
-            dependencies,
-            Unit,
-        ) { _, incompatibleDependency, _ ->
-            val lookup = WeightBalancedTreeMap.get(
-                Ord.HashCode,
-                incompatibleDependency.mutuallyExclusiveDependencies,
+        dependencies.forEach { incompatibleDependency ->
+            if (dependency.mutuallyExclusiveDependencies.contains(incompatibleDependency)) throw MutuallyExclusiveDependenciesException(
                 dependency,
-            )
-            if (lookup != null) throw MutuallyExclusiveDependenciesException(
                 incompatibleDependency,
-                dependency,
-                lookup.value,
+                dependency.mutuallyExclusiveDependencies[incompatibleDependency],
             )
         }
 
-        dependencies = WeightBalancedTreeMap.add(
-            Ord.HashCode,
-            dependencies,
-            dependency,
-            null,
-        )
+        dependencies.add(dependency)
 
         val notation = dependency.toString()
         project.logger.log(
@@ -87,8 +62,8 @@ class EasyAutoConfiguration internal constructor(
         val gradleDependency = project.dependencies.create(notation) as ModuleDependency
         gradleDependency.isTransitive = dependency.isTransitive
         configuration.dependencies.add(gradleDependency)
-        Cons.forEach(dependency.excludedGroups) { group ->
-            configuration.exclude(group = group)
+        dependency.exclusions.forEach { (group, module) ->
+            configuration.exclude(group = group, module = module)
         }
         f(gradleDependency)
     }

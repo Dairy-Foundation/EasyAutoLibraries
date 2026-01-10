@@ -1,7 +1,5 @@
 package dev.frozenmilk.easyautolibraries
 
-import dev.frozenmilk.util.collections.Ord
-import dev.frozenmilk.util.collections.WeightBalancedTreeMap
 import org.gradle.api.Project
 import org.gradle.api.logging.LogLevel
 import kotlin.properties.ReadOnlyProperty
@@ -11,27 +9,15 @@ import kotlin.reflect.KProperty
  * a helper for keeping track of and creating [EasyAutoConfiguration]s
  */
 class EasyAutoConfigurations internal constructor(
-    private val project: Project,
-    internal var logLevel: LogLevel
+    private val project: Project, internal var logLevel: LogLevel
 ) {
-    private var configurations: WeightBalancedTreeMap<String, EasyAutoConfiguration>? = null
+    private val configurations = mutableMapOf<String, EasyAutoConfiguration>()
 
     /**
      * cached looked up of [EasyAutoConfiguration] by [name]
      */
-    operator fun invoke(name: String) = WeightBalancedTreeMap.get(
-        Ord.HashCode,
-        configurations,
-        name,
-    )?.value ?: run {
-        val res = EasyAutoConfiguration(project, ::logLevel, name)
-        configurations = WeightBalancedTreeMap.add(
-            Ord.HashCode,
-            configurations,
-            name,
-            res,
-        )
-        res
+    operator fun invoke(name: String) = configurations.getOrPut(name) {
+        EasyAutoConfiguration(project, ::logLevel, name)
     }
 
     /**
