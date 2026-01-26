@@ -1,5 +1,4 @@
-import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode
 
 repositories {
     mavenCentral()
@@ -8,7 +7,7 @@ repositories {
 }
 
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "2.0.21"
+    id("org.jetbrains.kotlin.jvm") version "2.3.0"
     id("java-library")
     id("dev.frozenmilk.publish")
     id("dev.frozenmilk.doc")
@@ -17,19 +16,16 @@ plugins {
 kotlin {
     jvmToolchain(17)
     compilerOptions {
-        freeCompilerArgs.add("-Xjvm-default=all")
+        freeCompilerArgs.add("-Xreturn-value-checker=full")
+        jvmDefault.set(JvmDefaultMode.NO_COMPATIBILITY)
     }
     coreLibrariesVersion = "1.9.24"
 }
 
-tasks.withType<KotlinCompile>().configureEach {
-    compilerOptions.apiVersion.set(KotlinVersion.KOTLIN_1_9)
-}
-
 dependencies {
     //noinspection GradleDependency
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.24")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21")
+    api("org.jetbrains.kotlin:kotlin-stdlib:2.3.0")
+    api("org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.0")
     compileOnly(gradleApi())
     compileOnly(gradleKotlinDsl())
 }
